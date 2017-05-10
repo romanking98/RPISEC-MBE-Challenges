@@ -1,3 +1,4 @@
+'''
 ASLR + NX + PIE + Partial RELRO
 
 make_note() is vulnerable.
@@ -11,7 +12,7 @@ Then run the vulnerability again (ROP) and then do system().
 Coded in python.
 
 -------------------------------------------------------------------------------------------------------------------------------
-
+'''
 #!/usr/bin/python
 from pwn import *
 '''overwrite sfunc with make_note and then call choice 3'''
